@@ -1,4 +1,3 @@
-
 package com.example.cortarnet
 
 import android.Manifest
@@ -455,4 +454,4 @@ class OrbView(context: Context) : View(context) {
         paint.color = Color.WHITE
         canvas.drawCircle(px, ly, d(2.5f), paint)
     }
-}
+}1
