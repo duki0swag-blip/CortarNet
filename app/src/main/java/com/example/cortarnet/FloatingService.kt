@@ -24,10 +24,12 @@ class FloatingService : Service() {
     companion object {
         @Volatile var running = false
         @Volatile var bloqueando = false
+        @Volatile var actual: FloatingService? = null
     }
 
     private lateinit var wm: WindowManager
     private var vista: BotonFlotanteView? = null
+    private var params: WindowManager.LayoutParams? = null
     private var activo = false
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -35,6 +37,7 @@ class FloatingService : Service() {
     override fun onCreate() {
         super.onCreate()
         running = true
+        actual = this
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         crearNotificacion()
         crearBoton()
@@ -55,7 +58,9 @@ class FloatingService : Service() {
     }
 
     private fun crearBoton() {
-        val params = WindowManager.LayoutParams(
+        val tamDp = getSharedPreferences("cortarnet", MODE_PRIVATE).getInt("tam", 58)
+
+        val p = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -67,8 +72,9 @@ class FloatingService : Service() {
             y = 300
             alpha = 0.95f
         }
+        params = p
 
-        val btn = BotonFlotanteView(this)
+        val btn = BotonFlotanteView(this, tamDp)
 
         var startX = 0
         var startY = 0
@@ -77,16 +83,16 @@ class FloatingService : Service() {
         btn.setOnTouchListener { v, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    startX = params.x
-                    startY = params.y
+                    startX = p.x
+                    startY = p.y
                     touchX = e.rawX
                     touchY = e.rawY
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = startX + (e.rawX - touchX).toInt()
-                    params.y = startY + (e.rawY - touchY).toInt()
-                    wm.updateViewLayout(v, params)
+                    p.x = startX + (e.rawX - touchX).toInt()
+                    p.y = startY + (e.rawY - touchY).toInt()
+                    wm.updateViewLayout(v, p)
                     true
                 }
                 MotionEvent.ACTION_UP -> {
@@ -98,7 +104,17 @@ class FloatingService : Service() {
         }
 
         vista = btn
-        wm.addView(btn, params)
+        wm.addView(btn, p)
+    }
+
+    fun cambiarTamano(dp: Int) {
+        val v = vista ?: return
+        val p = params ?: return
+        v.cambiarTamano(dp)
+        try {
+            wm.updateViewLayout(v, p)
+        } catch (e: Exception) {
+        }
     }
 
     private fun alternar() {
@@ -113,6 +129,7 @@ class FloatingService : Service() {
     override fun onDestroy() {
         running = false
         bloqueando = false
+        actual = null
         vista?.let {
             try {
                 wm.removeView(it)
@@ -129,7 +146,7 @@ class FloatingService : Service() {
 }
 
 /** Botón flotante: cuadrado oscuro con esquinas redondeadas y un play blanco. */
-class BotonFlotanteView(context: Context) : View(context) {
+class BotonFlotanteView(context: Context, tamDp: Int) : View(context) {
 
     var activo: Boolean = false
         set(valor) {
@@ -141,7 +158,13 @@ class BotonFlotanteView(context: Context) : View(context) {
     private val play = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
     private val stop = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
     private val triangulo = Path()
-    private val tam = (58 * resources.displayMetrics.density).toInt()
+    private var tam = (tamDp * resources.displayMetrics.density).toInt()
+
+    fun cambiarTamano(tamDp: Int) {
+        tam = (tamDp * resources.displayMetrics.density).toInt()
+        requestLayout()
+        invalidate()
+    }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         setMeasuredDimension(tam, tam)
