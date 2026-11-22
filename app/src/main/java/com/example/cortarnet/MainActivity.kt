@@ -4,7 +4,6 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -27,7 +26,6 @@ import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -170,65 +168,6 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, dp(12), 0, 0)
         })
         col.addView(tarjeta2, LinearLayout.LayoutParams(MATCH, WRAP))
-
-        // Tarjeta 3: tamaño del botón flotante
-        val prefs = getSharedPreferences("cortarnet", MODE_PRIVATE)
-        val tamMin = 36
-        val tamMax = 120
-        val tamGuardado = prefs.getInt("tam", 58).coerceIn(tamMin, tamMax)
-
-        val tarjeta3 = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            background = forma(TARJETA, BORDE, 28)
-            setPadding(dp(20), dp(20), dp(20), dp(20))
-        }
-        val cabecera3 = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        cabecera3.addView(TextView(this).apply {
-            text = "TAMAÑO DEL BOTÓN"
-            setTextColor(Color.parseColor("#D0CCD8"))
-            textSize = 14f
-            typeface = Typeface.DEFAULT_BOLD
-            letterSpacing = 0.08f
-        }, LinearLayout.LayoutParams(0, WRAP, 1f))
-        val etiquetaTam = TextView(this).apply {
-            text = "$tamGuardado"
-            textSize = 11f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#D0CCD8"))
-            background = forma(Color.parseColor("#0E0B13"), BORDE, 20)
-            setPadding(dp(14), dp(7), dp(14), dp(7))
-        }
-        cabecera3.addView(etiquetaTam)
-        tarjeta3.addView(cabecera3, LinearLayout.LayoutParams(MATCH, WRAP))
-
-        val barra = SeekBar(this).apply {
-            max = tamMax - tamMin
-            progress = tamGuardado - tamMin
-            progressTintList = ColorStateList.valueOf(Color.parseColor("#B04CFF"))
-            thumbTintList = ColorStateList.valueOf(Color.parseColor("#E040FF"))
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(s: SeekBar?, valor: Int, delUsuario: Boolean) {
-                    val nuevo = valor + tamMin
-                    etiquetaTam.text = "$nuevo"
-                    prefs.edit().putInt("tam", nuevo).apply()
-                    FloatingService.actual?.cambiarTamano(nuevo)
-                }
-
-                override fun onStartTrackingTouch(s: SeekBar?) {}
-                override fun onStopTrackingTouch(s: SeekBar?) {}
-            })
-        }
-        tarjeta3.addView(barra, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(14) })
-        tarjeta3.addView(TextView(this).apply {
-            text = "Mueve la barra para hacer el botón flotante más pequeño o más grande."
-            setTextColor(GRIS)
-            textSize = 12f
-            setPadding(0, dp(12), 0, 0)
-        })
-        col.addView(tarjeta3, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(16) })
 
         setContentView(scroll)
 
@@ -454,4 +393,4 @@ class OrbView(context: Context) : View(context) {
         paint.color = Color.WHITE
         canvas.drawCircle(px, ly, d(2.5f), paint)
     }
-}1
+}
